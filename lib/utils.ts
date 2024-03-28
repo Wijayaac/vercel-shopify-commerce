@@ -50,11 +50,11 @@ export const formatDiscounts = (data: DiscountMetaobject[]) => {
     );
 
     return {
-      name: fields.name,
-      code: fields.discount_code,
+      name: fields['name'],
+      code: fields['discount_code'],
       discount: {
-        amount: parseFloat(fields.amount) / 100,
-        minimumSpent: parseFloat(fields.minimum_spent)
+        amount: parseFloat(fields['amount']) / 100,
+        minimumSpent: parseFloat(fields['minimum_spent'])
       }
     };
   });
