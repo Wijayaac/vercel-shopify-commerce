@@ -1,7 +1,15 @@
 'use server';
 
 import { TAGS } from 'lib/constants';
-import { addToCart, createCart, getCart, removeFromCart, updateCart } from 'lib/shopify';
+import {
+  addToCart,
+  createCart,
+  getCart,
+  getDiscountMetaobjects,
+  removeFromCart,
+  updateCart
+} from 'lib/shopify';
+import { formatDiscounts } from 'lib/utils';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 
@@ -80,4 +88,50 @@ export async function updateItemQuantity(
   } catch (e) {
     return 'Error updating item quantity';
   }
+}
+
+export async function calculateDiscounts(cart: any) {
+  const metaobjects = await getDiscountMetaobjects('dynamic_discount');
+
+  const discountGroups = formatDiscounts(metaobjects);
+
+  if (discountGroups === undefined) {
+    return;
+  }
+
+  const subTotal = cart?.cost.subtotalAmount.amount;
+  const currencyCode = cart?.cost.subtotalAmount.currencyCode;
+
+  const discountGroupsSorted = discountGroups.sort(
+    (a, b) => a.discount.minimumSpent - b.discount.minimumSpent
+  );
+  const minSpent = Math.max(...discountGroupsSorted.map((group) => group.discount.minimumSpent));
+  const eligibleDiscount = discountGroupsSorted.filter(
+    (group) => subTotal >= group.discount.minimumSpent
+  );
+  const finalDiscount = eligibleDiscount.length
+    ? Math.max(...eligibleDiscount.map((group) => group.discount.amount))
+    : 0;
+  const closestNextTier = discountGroupsSorted
+    .filter((group) => group.discount.minimumSpent > subTotal)
+    .shift();
+
+  const spentToNextDiscount = closestNextTier
+    ? closestNextTier?.discount.minimumSpent - subTotal
+    : 0;
+  const nextDiscount = closestNextTier?.discount.amount;
+  const discountAmount = finalDiscount ? finalDiscount * 100 : 0;
+  // get discount code from the final discount group
+  const discountCode = eligibleDiscount.length ? eligibleDiscount[0]?.code : '';
+
+  return {
+    discountAmount,
+    spentToNextDiscount,
+    nextDiscount,
+    discountGroups: discountGroupsSorted,
+    discountCode,
+    minSpent,
+    subTotal,
+    currencyCode
+  };
 }

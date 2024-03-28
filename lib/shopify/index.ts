@@ -16,6 +16,7 @@ import {
   getCollectionQuery,
   getCollectionsQuery
 } from './queries/collection';
+import { getDiscountMetaobjectsQuery } from './queries/discount-metaobject';
 import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
 import {
@@ -39,6 +40,7 @@ import {
   ShopifyCollectionProductsOperation,
   ShopifyCollectionsOperation,
   ShopifyCreateCartOperation,
+  ShopifyDiscountMetaobjectsOperation,
   ShopifyMenuOperation,
   ShopifyPageOperation,
   ShopifyPagesOperation,
@@ -447,4 +449,15 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
+}
+
+export async function getDiscountMetaobjects(type: string) {
+  const res = await shopifyFetch<ShopifyDiscountMetaobjectsOperation>({
+    query: getDiscountMetaobjectsQuery,
+    cache: 'no-store',
+    tags: ['metaobjects'],
+    variables: { type }
+  });
+
+  return removeEdgesAndNodes(res.body.data.metaobjects);
 }
