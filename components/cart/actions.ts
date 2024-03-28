@@ -93,11 +93,11 @@ export async function updateItemQuantity(
 export async function calculateDiscounts(cart: any) {
   const metaobjects = await getDiscountMetaobjects('dynamic_discount');
 
-  const discountGroups = formatDiscounts(metaobjects);
-
-  if (discountGroups === undefined) {
+  if (!metaobjects?.length || !cart?.cost.subtotalAmount.amount) {
     return;
   }
+
+  const discountGroups = formatDiscounts(metaobjects);
 
   const subTotal = cart?.cost.subtotalAmount.amount;
   const currencyCode = cart?.cost.subtotalAmount.currencyCode;
@@ -121,7 +121,7 @@ export async function calculateDiscounts(cart: any) {
     : 0;
   const nextDiscount = closestNextTier?.discount.amount;
   const discountAmount = finalDiscount ? finalDiscount * 100 : 0;
-  // get discount code from the final discount group
+
   const discountCode = eligibleDiscount.length ? eligibleDiscount[0]?.code : '';
 
   return {

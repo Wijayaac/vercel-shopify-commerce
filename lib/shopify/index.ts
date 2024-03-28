@@ -28,6 +28,7 @@ import {
   Cart,
   Collection,
   Connection,
+  DiscountMetaobject,
   Image,
   Menu,
   Page,
@@ -451,7 +452,9 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
 }
 
-export async function getDiscountMetaobjects(type: string) {
+export async function getDiscountMetaobjects(
+  type: string
+): Promise<DiscountMetaobject[] | undefined> {
   const res = await shopifyFetch<ShopifyDiscountMetaobjectsOperation>({
     query: getDiscountMetaobjectsQuery,
     cache: 'no-store',
